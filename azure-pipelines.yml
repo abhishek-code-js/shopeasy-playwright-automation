@@ -85,8 +85,8 @@ stages:
 
           - script: |
               npx json-server --watch test-data/db.json --port 3001 &
-              npm run preview -- --port 4173 &
-              npx wait-on http://localhost:4173 http://localhost:3001 --timeout 30000
+              npm run preview -- --host 0.0.0.0 --port 4173 &
+              npx wait-on http://127.0.0.1:4173 http://127.0.0.1:3001 --timeout 60000
             displayName: Start servers
 
           - script: |
