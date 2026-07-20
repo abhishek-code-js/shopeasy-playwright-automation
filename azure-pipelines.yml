@@ -16,7 +16,7 @@ pr:
 
 # Run nightly at 2 AM IST (8:30 PM UTC)
 schedules:
-  - cron: '30 20 * * *'
+  - cron: "30 20 * * *"
     displayName: Nightly Full Regression
     branches:
       include:
@@ -24,16 +24,15 @@ schedules:
     always: true
 
 variables:
-  NODE_VERSION: '20'
-  BASE_URL: 'http://localhost:4173'
-  API_BASE: 'http://localhost:3001'
+  NODE_VERSION: "24"
+  BASE_URL: "http://localhost:4173"
+  API_BASE: "http://localhost:3001"
   PLAYWRIGHT_BROWSERS_PATH: $(Pipeline.Workspace)/.cache/playwright
 
 pool:
   vmImage: ubuntu-latest
 
 stages:
-
   # ── Stage 1: Install & Build ───────────────────────────────────────
   - stage: Build
     displayName: Install & Build
@@ -127,7 +126,7 @@ stages:
             inputs:
               testResultsFormat: JUnit
               testResultsFiles: reports/results.xml
-              testRunTitle: 'UI Tests – $(Build.SourceBranchName)'
+              testRunTitle: "UI Tests – $(Build.SourceBranchName)"
               mergeTestResults: true
               failTaskOnFailedTests: true
 
@@ -166,7 +165,7 @@ stages:
             inputs:
               testResultsFormat: JUnit
               testResultsFiles: reports/results.xml
-              testRunTitle: 'API Tests – $(Build.SourceBranchName)'
+              testRunTitle: "API Tests – $(Build.SourceBranchName)"
               mergeTestResults: true
 
   # ── Stage 4: BDD / Cucumber ────────────────────────────────────────
