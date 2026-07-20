@@ -1,0 +1,261 @@
+# azure-pipelines.yml
+# Azure DevOps CI/CD pipeline for ShopEasy QA
+# Publishes test results natively to Azure Test Plans
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - feature/*
+
+pr:
+  branches:
+    include:
+      - main
+
+# Run nightly at 2 AM IST (8:30 PM UTC)
+schedules:
+  - cron: '30 20 * * *'
+    displayName: Nightly Full Regression
+    branches:
+      include:
+        - main
+    always: true
+
+variables:
+  NODE_VERSION: '20'
+  BASE_URL: 'http://localhost:4173'
+  API_BASE: 'http://localhost:3001'
+  PLAYWRIGHT_BROWSERS_PATH: $(Pipeline.Workspace)/.cache/playwright
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+
+  # ── Stage 1: Install & Build ───────────────────────────────────────
+  - stage: Build
+    displayName: Install & Build
+    jobs:
+      - job: Install
+        displayName: npm install + Playwright setup
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(NODE_VERSION)
+            displayName: Use Node.js $(NODE_VERSION)
+
+          - script: npm ci
+            displayName: Install npm dependencies
+
+          - script: npx playwright install --with-deps chromium
+            displayName: Install Playwright Chromium
+
+          - script: npm run build
+            displayName: Build Vite app
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: dist
+              artifact: app-build
+            displayName: Publish build artifact
+
+  # ── Stage 2: UI Tests ─────────────────────────────────────────────
+  - stage: UITests
+    displayName: UI Tests (Playwright)
+    dependsOn: Build
+    jobs:
+      - job: RunUI
+        displayName: UI + E2E Tests
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(NODE_VERSION)
+
+          - script: npm ci
+            displayName: Install dependencies
+
+          - script: npx playwright install --with-deps chromium
+            displayName: Install Playwright browsers
+
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: app-build
+              targetPath: dist
+
+          - script: |
+              npx json-server --watch test-data/db.json --port 3001 &
+              npm run preview -- --port 4173 &
+              npx wait-on http://localhost:4173 http://localhost:3001 --timeout 30000
+            displayName: Start servers
+
+          - script: |
+              npx playwright test tests/ui tests/e2e \
+                --reporter=junit,html,json \
+                --output=test-results
+            displayName: Run UI + E2E tests
+            env:
+              BASE_URL: $(BASE_URL)
+              CI: true
+            continueOnError: true
+
+          # Publish screenshots
+          - task: PublishPipelineArtifact@1
+            condition: always()
+            inputs:
+              targetPath: screenshots
+              artifact: screenshots
+
+          # Publish Playwright traces
+          - task: PublishPipelineArtifact@1
+            condition: always()
+            inputs:
+              targetPath: traces
+              artifact: traces
+
+          # Publish Playwright HTML report
+          - task: PublishPipelineArtifact@1
+            condition: always()
+            inputs:
+              targetPath: reports/playwright-report
+              artifact: playwright-html-report
+
+          # Publish JUnit results → Azure Test Plans
+          - task: PublishTestResults@2
+            condition: always()
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: reports/results.xml
+              testRunTitle: 'UI Tests – $(Build.SourceBranchName)'
+              mergeTestResults: true
+              failTaskOnFailedTests: true
+
+  # ── Stage 3: API Tests ─────────────────────────────────────────────
+  - stage: APITests
+    displayName: API Tests (Playwright Request)
+    dependsOn: Build
+    jobs:
+      - job: RunAPI
+        displayName: API Tests
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(NODE_VERSION)
+
+          - script: npm ci
+          - script: npx playwright install --with-deps chromium
+
+          - script: |
+              npx json-server --watch test-data/db.json --port 3001 &
+              npx wait-on http://localhost:3001 --timeout 20000
+            displayName: Start API server
+
+          - script: |
+              npx playwright test tests/api \
+                --reporter=junit,json \
+                --output=test-results
+            displayName: Run API tests
+            env:
+              API_BASE: $(API_BASE)
+              CI: true
+            continueOnError: true
+
+          - task: PublishTestResults@2
+            condition: always()
+            inputs:
+              testResultsFormat: JUnit
+              testResultsFiles: reports/results.xml
+              testRunTitle: 'API Tests – $(Build.SourceBranchName)'
+              mergeTestResults: true
+
+  # ── Stage 4: BDD / Cucumber ────────────────────────────────────────
+  - stage: BDDTests
+    displayName: BDD – Cucumber
+    dependsOn: Build
+    jobs:
+      - job: RunCucumber
+        displayName: Cucumber BDD Tests
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(NODE_VERSION)
+
+          - script: npm ci
+          - script: npx playwright install --with-deps chromium
+
+          - script: |
+              npx json-server --watch test-data/db.json --port 3001 &
+              npm run preview -- --port 4173 &
+              npx wait-on http://localhost:4173 --timeout 30000
+            displayName: Start servers
+
+          - script: npm run test:cucumber
+            displayName: Run Cucumber scenarios
+            env:
+              BASE_URL: $(BASE_URL)
+            continueOnError: true
+
+          - task: PublishPipelineArtifact@1
+            condition: always()
+            inputs:
+              targetPath: reports/cucumber-report.html
+              artifact: cucumber-report
+
+  # ── Stage 5: Reporting ─────────────────────────────────────────────
+  - stage: Reporting
+    displayName: Generate Reports
+    dependsOn:
+      - UITests
+      - APITests
+      - BDDTests
+    condition: always()
+    jobs:
+      - job: ExcelReport
+        displayName: Update Excel Tracker + Publish
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(NODE_VERSION)
+
+          - script: npm ci
+
+          # Download all results artifacts from previous stages
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifact: playwright-html-report
+              targetPath: reports/playwright-report
+            continueOnError: true
+
+          - script: node scripts/update-excel.js
+            displayName: Update Excel tracker from results
+
+          - task: PublishPipelineArtifact@1
+            inputs:
+              targetPath: reports/QA-TestCases-ShopEasy.xlsx
+              artifact: qa-excel-tracker
+            displayName: Publish Excel report
+
+  # ── Stage 6: Deploy preview to Netlify ────────────────────────────
+  - stage: Deploy
+    displayName: Deploy to Netlify (Preview)
+    dependsOn: UITests
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: DeployNetlify
+        displayName: Netlify Deploy
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(NODE_VERSION)
+
+          - script: npm ci && npm run build
+            displayName: Build app
+
+          - script: |
+              npm install -g netlify-cli
+              netlify deploy --prod --dir=dist --site=$NETLIFY_SITE_ID
+            displayName: Deploy to Netlify
+            env:
+              NETLIFY_AUTH_TOKEN: $(NETLIFY_AUTH_TOKEN)
+              NETLIFY_SITE_ID: $(NETLIFY_SITE_ID)

@@ -4,3 +4,5 @@ reports/
 screenshots/
 traces/
 .env
+# Local Netlify folder
+.netlify
