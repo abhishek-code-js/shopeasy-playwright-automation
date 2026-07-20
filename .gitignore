@@ -1,0 +1,7 @@
+ShopEasy-QA.md
+node_modules/
+dist/
+reports/
+screenshots/
+traces/
+.env

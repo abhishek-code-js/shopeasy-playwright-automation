@@ -1,0 +1,33 @@
+{
+  "name": "shopeasy-qa",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "api": "json-server --watch test-data/db.json --port 3001",
+    "test": "playwright test",
+    "test:ui": "playwright test tests/ui",
+    "test:api": "playwright test tests/api",
+    "test:e2e": "playwright test tests/e2e",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report",
+    "test:cucumber": "cucumber-js --config cucumber.config.js",
+    "update:excel": "node scripts/update-excel.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@cucumber/cucumber": "^13.0.0",
+    "@playwright/test": "^1.61.1",
+    "exceljs": "^4.4.0",
+    "vite": "^8.1.3"
+  },
+  "dependencies": {
+    "json-server": "^0.17.4"
+  }
+}

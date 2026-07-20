@@ -1,0 +1,39 @@
+id,module,title,priority,type,automated
+TC-L-001,Login,Login form renders all required fields,High,Functional,Yes
+TC-L-002,Login,Successful login with valid credentials,High,Functional,Yes
+TC-L-003,Login,Login fails with invalid password,High,Negative,Yes
+TC-L-004,Login,Empty email shows validation error,Medium,Validation,Yes
+TC-L-005,Login,Invalid email format shows error,Medium,Validation,Yes
+TC-L-006,Login,Password field is masked (type=password),High,Security,Yes
+TC-L-007,Login,Screenshot captured on login failure,Low,Functional,Yes
+TC-CF-001,Contact Form,Contact form renders all fields,Medium,Functional,Yes
+TC-CF-002,Contact Form,Valid submission shows success message,High,Functional,Yes
+TC-CF-003,Contact Form,Empty name shows validation error,Medium,Validation,Yes
+TC-CF-004,Contact Form,Short message (< 20 chars) shows error,Medium,Validation,Yes
+TC-CF-005,Contact Form,Invalid email in contact form shows error,Medium,Validation,Yes
+TC-CF-006,Contact Form,Screenshot and trace after form submit,Low,Functional,Yes
+TC-CF-007,Contact Form,Element screenshot of success alert,Low,Functional,Yes
+TC-C-001,Cart,Empty cart shows empty message,Medium,Functional,Yes
+TC-C-002,Cart,Adding product increments cart count,High,Functional,Yes
+TC-C-003,Cart,Cart shows correct item after add,High,Functional,Yes
+TC-C-004,Cart,Same product twice increments quantity,Medium,Functional,Yes
+TC-C-005,Cart,Removing item from cart,High,Functional,Yes
+TC-C-006,Cart,Cart total reflects correct price,High,Functional,Yes
+TC-C-007,Cart,Checkout flow with trace recording,High,E2E,Yes
+TC-C-008,Cart,Multiple products show correct count,Medium,Functional,Yes
+TC-API-P-001,API - Products,GET /products returns 200 and array,High,API,Yes
+TC-API-P-002,API - Products,GET /products returns required fields,High,API,Yes
+TC-API-P-003,API - Products,GET /products/1 returns correct product,High,API,Yes
+TC-API-P-004,API - Products,GET /products/9999 returns 404,High,API Negative,Yes
+TC-API-P-005,API - Products,POST /products creates a new product,Medium,API,Yes
+TC-API-P-006,API - Products,PATCH /products/1 updates stock,Medium,API,Yes
+TC-API-O-001,API - Orders,GET /orders returns 200 and array,High,API,Yes
+TC-API-O-002,API - Orders,GET /orders/101 has correct structure,High,API,Yes
+TC-API-O-003,API - Orders,POST /orders creates order (201),High,API,Yes
+TC-API-O-004,API - Orders,PATCH /orders updates status,Medium,API,Yes
+TC-API-O-005,API - Orders,DELETE /orders removes the order,Medium,API,Yes
+TC-API-C-001,API - Contacts,POST /contacts saves submission,High,API,Yes
+TC-API-C-002,API - Contacts,GET /contacts returns list,Low,API,Yes
+TC-E2E-001,E2E,Login to Browse to Add to Checkout full flow,Critical,E2E,Yes
+TC-E2E-002,E2E,Unauthenticated user stays on login page,High,E2E,Yes
+TC-E2E-003,E2E,Logout resets cart and redirects to login,High,E2E,Yes

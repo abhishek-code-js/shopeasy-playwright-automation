@@ -1,0 +1,4 @@
+id,tcId,module,summary,severity,priority,status,reportedBy,date,jiraLink,remarks
+BUG-001,TC-CF-003,Contact Form,Empty name validation error not showing in Firefox,Medium,High,Open,Abhishek Shah,2026-07-01,,Reproducible on Firefox 126 only
+BUG-002,TC-API-O-004,API - Orders,PATCH /orders not updating status field correctly,High,High,In Progress,Abhishek Shah,2026-07-02,SHOP-45,Dev team investigating
+BUG-003,TC-C-006,Cart,Cart total shows wrong value for quantities above 99,Medium,Medium,Fixed,Abhishek Shah,2026-06-28,SHOP-41,Fixed in build v1.3 - verified
