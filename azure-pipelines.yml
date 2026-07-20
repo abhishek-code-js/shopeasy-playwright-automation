@@ -84,12 +84,19 @@ stages:
               targetPath: dist
 
           - script: |
-              npx json-server --watch test-data/db.json --port 3001 &
+              npx json-server --watch test-data/db.json --host 0.0.0.0 --port 3001 &
               npm run preview -- --host 0.0.0.0 --port 4173 &
-              npx wait-on \
-                 http-get://127.0.0.1:4173 \
-                 http-get://127.0.0.1:3001/products \
-                 --timeout 60000
+
+              sleep 5
+
+              echo "===== CURL TEST ====="
+              curl -v http://127.0.0.1:3001/products || true
+
+              echo "===== PORTS ====="
+              ss -tulpn | grep 3001 || true
+
+              echo "===== WAIT-ON ====="
+              npx wait-on http-get://127.0.0.1:4173 http-get://127.0.0.1:3001/products --timeout 60000
             displayName: Start servers
 
           - script: |
@@ -149,7 +156,7 @@ stages:
           - script: npx playwright install --with-deps chromium
 
           - script: |
-              npx json-server --watch test-data/db.json --port 3001 &
+              npx json-server --watch test-data/db.json --host 0.0.0.0 --port 3001 &
               npx wait-on http://localhost:3001 --timeout 20000
             displayName: Start API server
 
@@ -187,7 +194,7 @@ stages:
           - script: npx playwright install --with-deps chromium
 
           - script: |
-              npx json-server --watch test-data/db.json --port 3001 &
+              npx json-server --watch test-data/db.json --host 0.0.0.0 --port 3001 &
               npm run preview -- --port 4173 &
               npx wait-on \
                 http-get://127.0.0.1:4173 \
